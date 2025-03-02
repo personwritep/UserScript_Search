@@ -399,7 +399,6 @@ function main(){
 
         let scripts=dat.scripts;
         for(let k=0; k<scripts.length; k++){
-            let enabled=scripts[k].enabled;
             let name=scripts[k].name;
             let position=scripts[k].position;
             let source=scripts[k].source;
@@ -421,9 +420,9 @@ function main(){
                     version=''; }}
 
             if(n==0){
-                list0.push([position, enabled, name, version]); }
+                list0.push([position, name, version]); }
             else if(n==1){
-                list1.push([position, enabled, name, version]); }}
+                list1.push([position, name, version]); }}
 
 
         let fname=document.querySelector('.file0>.fname');
@@ -474,10 +473,10 @@ function main(){
         get=[]; // 初期化
         if(n==0){
             for(let k=0; k<list0.length; k++){
-                get.push([list0[k][0], list0[k][1], list0[k][2], list0[k][3]]); }}
+                get.push([list0[k][0], list0[k][1], list0[k][2]]); }}
         else if(n==1){
             for(let k=0; k<list1.length; k++){
-                get.push([list1[k][0], list1[k][1], list1[k][2], list1[k][3]]); }}
+                get.push([list1[k][0], list1[k][1], list1[k][2]]); }}
 
         let ul=document.querySelector('#panel_USL .us_list.l'+ n +' ul');
         let li='';
@@ -486,16 +485,9 @@ function main(){
 
             for(let k=0; k<get.length; k++){
                 li+=
-                    '<li><span class="dp">'+ get[k][0] +'</span>';
-
-                if(get[k][1]==true){
-                    li+='<span class="de">'+ toggle_R +'</span>'; }
-                else{
-                    li+='<span class="de">'+ toggle_G +'</span>'; }
-
-                li+=
-                    '<span class="dn">'+ get[k][2] +'</span>'+
-                    '<span class="dv">'+ get[k][3] +'</span></li>'; }
+                    '<li><span class="dp">'+ get[k][0] +'</span>'+
+                    '<span class="dn">'+ get[k][1] +'</span>'+
+                    '<span class="dv">'+ get[k][2] +'</span></li>'; }
 
             ul.insertAdjacentHTML('beforeend', li ); }
 
