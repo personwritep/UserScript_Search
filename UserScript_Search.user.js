@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name        UserScript Search
 // @namespace        http://tampermonkey.net/
-// @version        0.1
-// @description        Tampermonkey の登録スクリプトの検索絞り込み　ショートカット「Ctrl+F10」
+// @version        0.2
+// @description        Tampermonkey の登録スクリプトのリストを表示　ショートカット「F10」
 // @author        Personwritep
 // @match        https://*/*
 // @icon        https://www.google.com/s2/favicons?sz=64&domain=undefined.
@@ -19,15 +19,13 @@ if(!location.hostname.includes('example.com')){
         if(event.ctrlKey && event.keyCode==121){ // ショートカット「Ctrl+ F10」
             event.preventDefault();
             event.stopImmediatePropagation();
-            let win_apper='left=100, top=100, width=1104, height=800';
+            let win_apper='left=800, top=100, width=525, height=400';
             window.open('https://example.com/', null , win_apper); }}}
 
 
 if(location.hostname.includes('example.com')){
     env();
     main(); }
-
-
 
 
 function env(){
@@ -48,54 +46,45 @@ function env(){
 
 
 function main(){
+
     let data; // バックアップデータの中身
-    let get=[]; // リストディスプレイ用の配列
-    let list0=[]; // 左リスト0 のデータ保持配列
-    let list1=[]; // 右リスト1 のデータ保持配列
-    let usl_set=[]; //「UserScript List」のコントロール「wrap_select, snap, list_reverce」
-    let wrap_select; // 左右リストの表示「0:両方」「1:左のみ」「2:右のみ」
-    let snap; // スナップスクロール「0:無効」「1:有効」
-    let list_reverce; // 配列の降順表示「0:昇順」「1:降順」
-    let search=0; // 検索パネルの表示フラグ
+    let raw_list=[]; // リスト表示元の配列
+    let usl_set=[]; //「UserScript List」のコントロール
+    //  usl_set[0]：windowの高さ
+    //  usl_set[1]：windowのX位置
+    //  usl_set[2]：windowのY位置
+    //  usl_set[3]：配列の降順表示：「0」昇順「1」降順
 
-
-    let read_json=localStorage.getItem('USList'); // ストレージ 保存名
+    let read_json=localStorage.getItem('USSearch'); // ストレージ 保存名
     usl_set=JSON.parse(read_json);
     if(usl_set==null){
-        usl_set=[0, 1, 0]; } //「shrink, snap, list_reverce, wrap_select」初期値
+        usl_set=[400, 800, 100, 0]; } // 初期値
 
-    wrap_select=usl_set[0];
-    snap=usl_set[1];
-    list_reverce=usl_set[2];
-
-
+    window.moveTo(usl_set[1], usl_set[2]);
+    window.resizeTo(525, usl_set[0]); // 前回のウインドウサイズを指定
 
     display();
     disp_last_data();
-    environ();
-
-    file_read(0);
-    file_read(1);
-
+    file_read();
 
 
 
     function disp_last_data(){
         let file_name;
-        let read_json=localStorage.getItem('USList_data'); // アイテム名 左リストのみ保持 🔵
+        let read_json=localStorage.getItem('USList_data'); // アイテム名 リストデータ 🔵
         if(read_json){
-            list0=JSON.parse(read_json);
-            if(list0.length>1){
-                file_name=list0.shift();
+            raw_list=JSON.parse(read_json);
+            if(raw_list.length>1){
+                file_name=raw_list.shift();
 
-                let fname=document.querySelector('.file0>.fname');
+                let fname=document.querySelector('.file_reader_USS .fname');
                 if(file_name && fname){
                     fname.textContent=file_name; }
 
-                if(list0.length>0){
-                    if(list_reverce==1){
-                        list0.reverse(); }
-                    disp_list(0); }}}
+                if(raw_list.length>0){
+                    if(usl_set[3]==1){
+                        raw_list.reverse(); }
+                    disp_list(); }}}
 
         name_search();
 
@@ -105,24 +94,17 @@ function main(){
 
 
     function display(){
-        let help_url='https://ameblo.jp/personwritep/entry-12888168235.html';
 
-        let search_SVG=
-            '<svg viewBox="0 0 512 512" style="height: 16px; padding: 4px; fill: #666;">'+
-            '<path d="M416 208c0 46-15 88-40 123L503 457c13 13 13 33 0 45s-33 13-45 0'+
-            'L331 376c-34 25-77 40-123 40C93 416 0 323 0 208S93 0 208 0S416 93 416 20'+
-            '8zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path>'+
-            '</svg>';
-
-        let snap_SVG=
-            '<svg viewBox="0 0 530 530" style="height: 24px; fill: #00b2a5;">'+
-            '<path d="M112 67L112 185L417 185L417 67L112 '+
-            '67M17 158L17 236C45 228 70 207 98 198C93 192 83 189 76 186C57 176 37 165'+
-            ' 17 158M431 196L431 198C458 208 484 230 512 236L512 158C484 166 457 184 '+
-            '431 196M112 208L112 326L417 326L417 208L112 208M17 299L17 377C44 369 74 '+
-            '352 98 338C90 332 80 329 71 324C54 316 35 305 17 299M431 339C459 349 484'+
-            ' 370 512 377L512 299C492 305 474 317 455 326C448 329 436 332 431 339M112'+
-            ' 349L112 466L417 466L417 349L112 349z"></path>'+
+        let pos_SVG=
+            '<svg viewbox="0 0 512 512" style="height: 18px; vertical-align: -3px;">'+
+            '<path d="M512 256c0 7-3 13-8 18l-80 72C420 350 414 352 408 352c-3 0-7-1-'+
+            '10-2C390 346 384 338 384 328V288h-96v96l40-0c9 0 18 6 22 14s2 19-4 26l-7'+
+            '2 80C269 509 263 512 255 512s-13-3-18-8l-71-80c-6-7-8-17-4-26s12-14 22-1'+
+            '4l39 0V288H128v40c0 9-6 18-14 22C111 351 107 352 104 352c-6 0-12-2-16-6l'+
+            '-80-72C3 269 0 263 0 256s3-13 8-18l80-72C95 160 105 158 114 162C122 166 '+
+            '128 175 128 184V224h95V128l-39-0c-9 0-18-6-22-14S160 95 166 88l71-80c9-1'+
+            '0 27-10 36 0l72 80c6 7 8 17 4 26s-12 14-22 14l-40 0V224H384V184c0-9 6-18'+
+            ' 14-22c9-4 19-2 26 4l80 72C509 243 512 249 512 256z"></path>'+
             '</svg>';
 
         let rev_SVG=
@@ -140,188 +122,74 @@ function main(){
             '</svg>';
 
         let panel=
-            '<div id="panel_USL">'+
+            '<div id="panel_USS">'+
             '<div class="main_panel">'+
+            '<div id="search_panel">'+
+            'Script name<input type="text" class="script_name">'+
+            'As standard file<button class="sw4 sw" type="submit">Set</button>'+
+            'Position<button class="sw5 sw" type="submit">'+ pos_SVG +'</button>'+
+            '</div>'+
 
-            '<div class="wrap">'+
-            '<div class="file_reader_USL file0">'+
-            '<button class="sw0 sw" type="submit">×</button>'+
+            '<div class="file_reader_USS">'+
             '<input class="sw1 sw" type="submit" value="File">'+
             '<input class="sw2" type="file">'+
             '<span class="fname"></span>'+
-            '<button class="sw3 sw" type="submit">'+ search_SVG +'</button>'+
-            '<input class="sw4 sw" type="submit" value="Equal" '+
-            'title="左右のリストを比較\n青: 一致　黄色: バージョン違い　白: 一致なし">'+
+            '<button class="sw3 sw" type="submit">'+ rev_SVG +'</button>'+
             '</div>'+
-            '<div class="us_list l0">'+
+            '<div class="us_list">'+
             '<ul></ul>'+
-            '</div></div>'+
-
-            '<div class="wrap">'+
-            '<div class="file_reader_USL file1">'+
-            '<button class="sw0 sw" type="submit">×</button>'+
-            '<input class="sw1 sw" type="submit" value="File">'+
-            '<input class="sw2" type="file">'+
-            '<span class="fname"></span>'+
-            '<button class="sw5 sw" type="submit">'+ snap_SVG +'</button>'+
-            '<button class="sw6 sw" type="submit">'+ rev_SVG +'</button>'+
-            '<button class="sw7 sw" type="submit">'+
-            '<a href="'+ help_url +'" target="_blank" rel="noopener noreferrer"><b>？</b>'+
-            '</a></button>'+
-            '</div>'+
-            '<div class="us_list l1">'+
-            '<ul></ul>'+
-            '</div></div>'+
-            '</div>'+
+            '</div></div></div>'+
 
             '<style>'+
-            '@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap"); '+
             'html { overflow: hidden; } '+
-            '#panel_USL { font-size: 85%; font-family: "Roboto", "sans-serif"; } '+
-            '#panel_USL { position: fixed; top: 0; left: 0; z-index: 0; '+
-            'overflow-y: hidden; overflow-x: scroll; scrollbar-width: none; width: 100vw; '+
-            'color: #666; box-sizing: border-box; } '+
-            '#panel_USL .main_panel { '+
-            'display: flex; position: relative; width: fit-content; padding: 4px 15px 5px; '+
-            'background: #73a9d4; box-shadow: 0 0 0 100vw #b6d2df; } '+
-            '.wrap { position: relative; height: auto; padding: 0 3px; } '+
-            '.file_reader_USL { position: relative; z-index: 1; display: flex; align-items: center; '+
-            'padding: 0 15px; height: 40px; margin-bottom: 3px; color: #000; background: #fff; } '+
+            'body { margin: 0; } '+
+            '#panel_USS { font: 16px Meiryo; color: #666; box-sizing: border-box; } '+
+            '#panel_USS .main_panel { display: flex; flex-direction: column; width: fit-content; '+
+            'padding: 8px 15px; background: #73a9d4; box-shadow: 0 0 0 100vw #b6d2df; } '+
 
-            '#panel_USL .sw { font: normal 16px/27px Meiryo; width: 26px; height: 26px; '+
+            '#search_panel * { font: normal 16px Meiryo; } '+
+            '#search_panel { Meiryo; padding: 6px 12px; color: #fff; background: #333; '+
+            'white-space: nowrap; } '+
+            '.script_name { width: 48px; height: 20px; padding: 2px 6px 0; margin: 0 18px 0 6px; } '+
+            '.script_name:focus-visible { outline: 1px solid #4FC3F7; } '+
+
+            '.file_reader_USS { position: relative; z-index: 1; display: flex; align-items: center; '+
+            'padding: 0 15px; height: 40px; margin-bottom: 6px; color: #000; background: #fff; } '+
+
+            '#panel_USS .sw { font: normal 16px/27px Meiryo; width: 26px; height: 26px; '+
             'padding: 0; border: 1px solid #aaa; border-radius: 2px; } '+
-            '#panel_USL .sw0 { width: 16px; margin-right: 8px; } '+
-            '#panel_USL .sw1 { height: 26px; width: 38px; } '+
-            '#panel_USL .sw2 { display: none; } '+
-            '#panel_USL .sw3 { position: absolute; top: 7px; right: 78px; cursor: pointer; } '+
-            '#panel_USL .sw4 { position: absolute; top: 7px; right: 15px; width: 56px; } '+
-            '#panel_USL .sw5 { position: absolute; top: 7px; right: 78px; } '+
-            '#panel_USL .sw5 svg { opacity: 0.2; } '+
-            '#panel_USL .sw6 { position: absolute; top: 7px; right: 45px; } '+
-            '#panel_USL .sw7 { position: absolute; top: 10px; right: 12px; color: #999; '+
-            'width: 21px; height: 21px; line-height: 22px; border-radius: 30px; } '+
-            '#panel_USL .sw7 a { text-decoration: none; } '+
-            '#panel_USL .fname { font: normal 15px/30px Meiryo; margin: 0 12px; height: 26px; } '+
+            '#panel_USS .sw1 { height: 26px; width: 38px; cursor: pointer; } '+
+            '#panel_USS .sw2 { display: none; } '+
+            '#panel_USS .fname { font: normal 16px/24px Meiryo; margin: 0 12px; height: 21px; } '+
+            '#panel_USS .sw3 { position: absolute; top: 7px; right: 15px; cursor: pointer; } '+
+            '#panel_USS .sw4 { margin: 0 15px 0 6px; width: auto; padding: 0 4px; cursor: pointer; } '+
+            '#panel_USS .sw5 { margin-left: 6px; cursor: pointer; } '+
 
-            '#panel_USL .us_list { position: relative; z-index: 2; '+
-            'width: 530px; height: calc(100vh - 52px); overflow-y: scroll; overflow-x: hidden; '+
-            'color: #000; background: #fff; outline: none; } '+
-            '#panel_USL .us_list ul { padding: 0; margin: 0; } '+
-            '#panel_USL .us_list li { line-height: 21px; height: 23.2px; box-sizing: content-box; '+
+            '#panel_USS .us_list { width: 480px; height: calc(100vh - 100px); '+
+            'overflow-y: scroll; overflow-x: hidden; color: #000; background: #fff; outline: none; } '+
+            '#panel_USS .us_list ul { padding: 0; margin: 0; } '+
+            '#panel_USS .us_list li { line-height: 22px; height: 23.2px; box-sizing: content-box; '+
             'padding: 12px 0 8px 4px; border-bottom: 1px solid #ccc; list-style: none; } '+
-            '#panel_USL .us_list li:hover { box-shadow: inset 0 0 0 40px #aaaaaa20; } '+
-            '#panel_USL .us_list li >* { display: inline-block; } '+
-            '#panel_USL .dp { width: 55px; text-align: center; } '+
-            '#panel_USL .de { width: 45px; text-align: left; } '+
-            '#panel_USL .dn { width: 300px; white-space: nowrap; } '+
-            '#panel_USL .dv { width: 80px; padding: 0 6px; margin: 0 -20px 2px 15px; } '+
-            '.far { height: 17px; vertical-align: -3px; } '+
-            '</style>'+
-
-            '<style class="snap_style">'+
-            '#panel_USL .us_list { scroll-snap-type: y mandatory; } '+
-            '#panel_USL .us_list li { scroll-snap-align: start; } '+
-            '#panel_USL .sw5 svg { opacity: 1; } '+
+            '#panel_USS .us_list li:hover { box-shadow: inset 0 0 0 40px #aaaaaa20; } '+
+            '#panel_USS .us_list li >* { display: inline-block; } '+
+            '#panel_USS .dp { width: 55px; text-align: center; } '+
+            '#panel_USS .dn { width: 300px; white-space: nowrap; overflow-x: scroll; '+
+            'scrollbar-width: none; vertical-align: -6px; } '+
+            '#panel_USS .dv { width: 80px; padding: 0 6px; margin: 0 -20px 2px 15px; } '+
             '</style>'+
             '</div>';
 
-        if(!document.querySelector('#panel_USL')){
+        if(!document.querySelector('#panel_USS')){
             document.body.insertAdjacentHTML('beforeend', panel); }
-
-
-        select_view(wrap_select);
-        snap_set(snap);
 
     } // display()
 
 
 
 
-    function environ(){
-        window.addEventListener('resize', function(){
-            if(list0.length>0){
-                last(0); }
-            if(list1.length>0){
-                last(1); }});
-
-
-        document.addEventListener("keydown", (event)=>{
-            let s_list=document.querySelectorAll('#panel_USL .us_list');
-            if(s_list.length==2){
-                if(event.keyCode==38){ //「⇧」キー入力
-                    focus_list(); }
-
-                else if(event.keyCode==40){ //「⇩」キー入力
-                    focus_list(); }
-
-                else if(event.keyCode==37){ //「⇦」リストのフォーカス切換え
-                    event.preventDefault();
-                    focus_list_lr(0); }
-
-                else if(event.keyCode==39){ //「⇨」リストのフォーカス切換え
-                    event.preventDefault();
-                    focus_list_lr(1); }
-
-                else if(event.keyCode==33){ //「PageUp」
-                    event.preventDefault();
-                    Page_list(0); }
-
-                else if(event.keyCode==34){ //「PageDown」
-                    event.preventDefault();
-                    Page_list(1); }
-
-
-                function focus_list(){
-                    if(s_list[0]!=document.activeElement && s_list[1]!=document.activeElement){
-                        s_list[1].focus();
-                        s_list[1].style.boxShadow='0 -6px 0 0 #00b0ff';
-                        setTimeout(()=>{
-                            s_list[1].style.boxShadow='unset';
-                        }, 800); } // 右リストを優先
-
-                    setTimeout(()=>{ //「⇧・⇩」キーの長押しでスクロール加速
-                        snap_scroll(0);
-                    }, 200);
-
-                    document.addEventListener("keyup", ()=>{
-                        setTimeout(()=>{ //「⇧・⇩」キーUPでスナップを「ON」に戻す
-                            snap_scroll(1);
-                        }, 200); }); }
-
-
-                function focus_list_lr(n){
-                    if(n==0){
-                        s_list[0].focus();
-                        s_list[0].style.boxShadow='0 -6px 0 0 #00b0ff';
-                        setTimeout(()=>{
-                            s_list[0].style.boxShadow='unset';
-                        }, 800); }
-                    else{
-                        s_list[1].focus();
-                        s_list[1].style.boxShadow='0 -6px 0 0 #00b0ff';
-                        setTimeout(()=>{
-                            s_list[1].style.boxShadow='unset';
-                        }, 800); }}
-
-
-                function Page_list(n){
-                    let reach=s_list[0].clientHeight - 80;
-                    if(n==0){
-                        s_list[0].scrollBy(0, -reach);
-                        s_list[1].scrollBy(0, -reach); }
-                    else{
-                        s_list[0].scrollBy(0, reach);
-                        s_list[1].scrollBy(0, reach); }}
-            }});
-
-    } // environ()
-
-
-
-
-    function file_read(n){
-        let sw1=document.querySelector('.file'+ n +'>.sw1');
-        let sw2=document.querySelector('.file'+ n +'>.sw2');
+    function file_read(){
+        let sw1=document.querySelector('.file_reader_USS .sw1');
+        let sw2=document.querySelector('.file_reader_USS .sw2');
         sw1.onclick=()=>{
             sw2.value=null; // 同じファイルの再読み込みを可能にする
             sw2.click(); }
@@ -333,14 +201,14 @@ function main(){
             let file=file_list[0];
             if(!file) return; // ファイルが無い場合
 
-            let fname=document.querySelector('.file'+ n +'>.fname');
+            let fname=document.querySelector('.file_reader_USS .fname');
             fname.textContent=file_time(file.name);
 
             let file_reader=new FileReader();
             file_reader.readAsText(file);
             file_reader.onload=function(){
                 let data_in=JSON.parse(file_reader.result);
-                extract_data(n, data_in); }}); // データの表示
+                extract_data(data_in); }}); // データの表示
 
 
         function file_time(filename){
@@ -353,49 +221,45 @@ function main(){
                     return full[0] +'　T'+ tail; }}}
 
 
-        let sw3=document.querySelector('#panel_USL .sw3');
-        sw3.onclick=function(){
-            name_search(); }
-
-
-        let sw4=document.querySelector('#panel_USL .sw4');
-        sw4.onclick=function(){
-            if(list0.length!=0 && list1.length!=0){
-                compare(); }}
-
-
-        let sw5=document.querySelector('#panel_USL .sw5');
-        sw5.onclick=function(){
-            if(snap==0){
-                snap_set(1); }
-            else{
-                snap_set(0); }}
-
-
-        let sw6=document.querySelector('#panel_USL .sw6');
-        if(sw6){
-            sw6.onclick=()=>{
+        let sw3=document.querySelector('#panel_USS .sw3');
+        if(sw3){
+            sw3.onclick=()=>{
                 nor_rev(); }}
 
 
-        let sw0=document.querySelectorAll('#panel_USL .sw0');
-        if(sw0.length==2){
-            sw0[0].onclick=()=>{
-                select_set(0); }
-            sw0[1].onclick=()=>{
-                select_set(1); }}
+        let sw4=document.querySelector('#panel_USS .sw4');
+        if(sw4){
+            sw4.onclick=()=>{
+                let ok=confirm(
+                    '💢 現在のリストを「基準リスト」に設定しますか？\n'+
+                    '「基準リスト」はツール起動時に常に読み込まれ 最初の検索対象になります\n\n'+
+                    '　　●  「OK」➔ 基準リストに設定する\n'+
+                    '　　●  「キャンセル」➔ 設定しない');
+                if(ok){
+                    set_standerd();
+                }
+                else{ ; }}}
+
+
+        let sw5=document.querySelector('#panel_USS .sw5');
+        if(sw5){
+            sw5.onclick=()=>{
+                let ok=confirm(
+                    '💢 現在のウインドウサイズと位置を標準設定にしますか？\n'+
+                    'ツール起動時に現在のサイズ・位置でウインドウが開きます\n\n'+
+                    '　　●  「OK」➔ 表示のサイズ・位置に設定する\n'+
+                    '　　●  「キャンセル」➔ 設定しない');
+                if(ok){
+                    set_window(); }
+                else{ ; }}}
 
     } //  file_read()
 
 
 
 
-    function extract_data(n, dat){
-        if(n==0){
-            list0=[]; } // 初期化
-        else if(n==1){
-            list1=[]; } // 初期化
-
+    function extract_data(dat){
+        raw_list=[]; // 初期化
 
         let scripts=dat.scripts;
         for(let k=0; k<scripts.length; k++){
@@ -419,66 +283,26 @@ function main(){
                 catch {
                     version=''; }}
 
-            if(n==0){
-                list0.push([position, name, version]); }
-            else if(n==1){
-                list1.push([position, name, version]); }}
+            raw_list.push([position, name, version]); }
 
 
-        let fname=document.querySelector('.file0>.fname');
-        let header=[];
-        header.push(fname.textContent);
-        let write=header.concat(list0);
-        let write_json=JSON.stringify(write);
-        localStorage.setItem('USList_data', write_json); // アイテム名 🔵 list0のみ保存
-
-
-        if(n==0){
-            if(list0.length>0){
-                if(list_reverce==1){
-                    list0.reverse(); }
-                disp_list(0); }}
-        else if(n==1){
-            if(list1.length>0){
-                if(list_reverce==1){
-                    list1.reverse(); }
-                disp_list(1); }}
+        if(raw_list.length>0){
+            if(usl_set[3]==1){
+                raw_list.reverse(); }
+            disp_list(); }
 
     } // extract_data()
 
 
 
 
-    function disp_list(n){
-        let toggle_G=
-            '<svg class="far" viewBox="0 0 240 168">'+
-            '<path style="fill: gray;" d="M67 7C55 9 43 14 33 22C3 48 3 96 '+
-            '32 122C54 142 84 138 112 138C125 138 138 140 151 138C163 136 175 131 1'+
-            '85 123C215 97 215 49 186 23C164 3 134 7 106 7C93 7 80 5 67 7z"></path>'+
-            '<path style="fill: #fff;" d="M70 23C62 25 55 27 48 32C13'+
-            ' 56 24 113 66 122C72 123 78 123 84 123C92 121 99 119 106 114C141 90 13'+
-            '0 33 88 24C82 23 76 23 70 23z"></path></svg>';
-
-        let toggle_R=
-            '<svg class="far" viewBox="0 0 240 168">'+
-            '<path style="fill: red;" d="M76 20C64 22 52 27 42 35C12 61 12'+
-            ' 109 41 135C63 155 93 151 121 151C134 151 147 153 160 151C172 149 184 '+
-            '144 194 136C224 110 224 62 195 36C173 16 143 20 115 20C102 20 89 18 76'+
-            ' 20z"></path>'+
-            '<path style="fill: #fff;" d="M143 35C135 37 128 39 121 4'+
-            '4C86 68 97 125 139 134C145 135 151 135 157 135C165 133 172 131 179 126'+
-            'C214 102 203 45 161 36C155 35 149 35 143 35z"></path></svg>';
+    function disp_list(){
+        let get=[]; // 初期化
+        for(let k=0; k<raw_list.length; k++){
+            get.push([raw_list[k][0], raw_list[k][1], raw_list[k][2]]); }
 
 
-        get=[]; // 初期化
-        if(n==0){
-            for(let k=0; k<list0.length; k++){
-                get.push([list0[k][0], list0[k][1], list0[k][2]]); }}
-        else if(n==1){
-            for(let k=0; k<list1.length; k++){
-                get.push([list1[k][0], list1[k][1], list1[k][2]]); }}
-
-        let ul=document.querySelector('#panel_USL .us_list.l'+ n +' ul');
+        let ul=document.querySelector('#panel_USS .us_list ul');
         let li='';
         if(ul){
             ul.innerHTML=''; // 書込みをクリア
@@ -491,336 +315,32 @@ function main(){
 
             ul.insertAdjacentHTML('beforeend', li ); }
 
-
-        last(n); // リスト末尾のmargin最適化
-
-        catch_line();
-
     } // disp_list()
 
 
 
 
-    function last(n){
-        let list=document.querySelector('.us_list.l'+n);
-        let list_li=document.querySelectorAll('.us_list.l'+ n +' li');
-        if(list && list_li){
-            let height_li=list_li[0].getBoundingClientRect().height;
-            let margin_last=(list.getBoundingClientRect().height)%height_li;
-            list_li[list_li.length-1].style.marginBottom=margin_last +'px'; }}
-
-
-
-
-    function catch_line(){
-        let items1=document.querySelectorAll('.us_list.l1 li');
-        for(let k=0; k<items1.length; k++){
-            items1[k].onclick=function(){
-                catch_up(items1[k]); }}
-
-
-        function catch_up(item){
-            let s_count=0; // スクロール動作のカウント
-            item.style.boxShadow='inset 15px 0 0 0 red';
-            setTimeout(()=>{
-                item.style.boxShadow='';
-            }, 800);
-
-            let name_span1=item.querySelector('.dn');
-            if(name_span1){
-                let name=name_span1.textContent;
-
-                let scroll_box=document.querySelector('.us_list.l0');
-                let items0=document.querySelectorAll('.us_list.l0 li');
-                for(let k=0; k<items0.length; k++){
-                    let name_span0=items0[k].querySelector('.dn');
-                    if(name_span0){
-                        if(name==name_span0.textContent){
-                            s_count+=1; // 最初のヒットのみスクロール
-                            seek_act(items0[k], item, s_count); }}}
-
-
-                function seek_act(elem0, elem1, count){
-                    elem0.style.boxShadow='inset -15px 0 0 0 red';
-                    snap_scroll(0);
-
-                    if(count==1){
-                        let reach=
-                            elem0.getBoundingClientRect().top - elem1.getBoundingClientRect().top;
-                        setTimeout(()=>{
-                            if(-2<reach && reach<2 ){
-                                reach=0; }
-                            scroll_box.scrollBy(0, reach); // 最初のヒットのみスクロール
-                        }, 100); }
-
-                    setTimeout(()=>{
-                        elem0.style.boxShadow='';
-                        snap_scroll(1);
-                    }, 800); } // seek_act()
-
-            }} // catch_up()
-
-    } // catch_line()
-
-
-
-
-    function compare(){
-        mark_reset();
-
-        let vv0=[];
-        for(let k=0; k<list1.length; k++){
-            let name=list1[k][2];
-            let result0_nvv=list0.filter( function(elem){
-                return elem[2]==name; }); // name一致
-
-            for(let r=0; r<result0_nvv.length; r++){
-                vv0.push(result0_nvv[r][0]); }} // name一致 の position 総計
-
-        let new_vv0=Array.from(new Set(vv0)); // 重複を整理
-
-
-        let v0=[];
-        for(let k=0; k<list1.length; k++){
-            let name=list1[k][2];
-            let version=list1[k][3];
-            let result0_nv=list0.filter( function(elem){
-                return elem[2]==name && elem[3]==version; }); // name・version一致
-
-            for(let r=0; r<result0_nv.length; r++){
-                v0.push(result0_nv[r][0]); }} // name・version一致 の position 総計
-
-        let new_v0=Array.from(new Set(v0)); // 重複を整理　name・version一致 の position 配列
-        new_vv0=new_vv0.filter(i=>new_v0.indexOf(i)==-1); // version違いの position 配列
-
-        mark0(new_v0, '#e1f5fe'); // 一致の配色 🟠
-        mark0(new_vv0, '#fef7ec'); // バージョン違いの配色 🟠
-
-
-        let vv1=[];
-        for(let k=0; k<list0.length; k++){
-            let name=list0[k][2];
-            let result1_nvv=list1.filter( function(elem){
-                return elem[2]==name; }); // name一致
-
-            for(let r=0; r<result1_nvv.length; r++){
-                vv1.push(result1_nvv[r][0]); }} // name一致 の position 総計
-
-        let new_vv1=Array.from(new Set(vv1)); // 重複を整理
-
-
-        let v1=[];
-        for(let k=0; k<list0.length; k++){
-            let name=list0[k][2];
-            let version=list0[k][3];
-            let result1_nv=list1.filter( function(elem){
-                return elem[2]==name && elem[3]==version; }); // name・version一致
-
-            for(let r=0; r<result1_nv.length; r++){
-                v1.push(result1_nv[r][0]); }} // name・version一致 の position 総計
-
-        let new_v1=Array.from(new Set(v1)); // 重複を整理　name・version一致 の position 配列
-        new_vv1=new_vv1.filter(i=>new_v1.indexOf(i)==-1); // version違いの position 配列
-
-        mark1(new_v1, '#e1f5fe'); // 一致の配色 🟠
-        mark1(new_vv1, '#fef7ec'); // バージョン違いの配色 🟠
-
-    } // compare()
-
-
-
-    function mark_reset(){
-        let items0=document.querySelectorAll('.us_list.l0 li');
-        for(let k=0; k<items0.length; k++){
-            items0[k].style.background='#fff'; }
-
-        let items1=document.querySelectorAll('.us_list.l1 li');
-        for(let k=0; k<items1.length; k++){
-            items1[k].style.background='#fff'; }}
-
-
-    function mark0(new_list, color){
-        let items0=document.querySelectorAll('.us_list.l0 li');
-        for(let k=0; k<items0.length; k++){
-            let dp=items0[k].querySelector('.dp').textContent/1;
-            if(new_list.includes(dp)){
-                items0[k].style.background=color; }}}
-
-
-    function mark1(new_list, color){
-        let items1=document.querySelectorAll('.us_list.l1 li');
-        for(let k=0; k<items1.length; k++){
-            let dp=items1[k].querySelector('.dp').textContent/1;
-            if(new_list.includes(dp)){
-                items1[k].style.background=color; }}}
-
-
-
-
-    function snap_set(n){
-        if(n==0){
-            snap=0;
-            snap_scroll(1); }
-        else{
-            snap=1;
-            snap_scroll(1); }
-
-        usl_set[1]=snap;
-        let write_json=JSON.stringify(usl_set);
-        localStorage.setItem('USList', write_json); } // ローカルストレージ名
-
-
-
-    function snap_scroll(n){
-        let s_style=document.querySelector('.snap_style');
-        if(s_style){
-            if(n==1 && snap==1){
-                s_style.disabled=false; }
-            else{
-                s_style.disabled=true; }}
-
-    } // snap_scroll()
-
-
-
-
-    function nor_rev(){
-        if(list_reverce==0){
-            list_reverce=1;
-            sort_reverse(); } // 降順
-        else{
-            list_reverce=0;
-            sort_normal(); } // 昇順
-
-        usl_set[2]=list_reverce;
-        let write_json=JSON.stringify(usl_set);
-        localStorage.setItem('USList', write_json); // ローカルストレージ名
-
-
-        function sort_reverse(){
-            if(list0.length>1){
-                if(list0[0][0]<list0[1][0]){
-                    list0.reverse();
-                    disp_list(0); }}
-            if(list1.length>1){
-                if(list1[0][0]<list1[1][0]){
-                    list1.reverse();
-                    disp_list(1); }}}
-
-
-        function sort_normal(){
-            if(list0.length>1){
-                if(list0[0][0]>list0[1][0]){
-                    list0.reverse();
-                    disp_list(0); }}
-            if(list1.length>1){
-                if(list1[0][0]>list1[1][0]){
-                    list1.reverse();
-                    disp_list(1); }}}
-
-    } // nor_rev()
-
-
-
-
-    function select_view(n){
-
-        let wide_SVG=
-            '<svg viewBox="0 0 300 300" style="width: 14px; height: 14px;">'+
-            '<path style="fill: rgb(0, 0, 0);" d="M89 57C80 58 73 72 67 79C55 96 42 1'+
-            '13 29 129C23 138 15 147 16 159C17 166 22 172 27 178C34 188 41 197 49 207'+
-            'C58 220 68 232 77 245C81 250 86 256 93 254C107 250 101 232 97 223C92 213'+
-            ' 87 204 83 194C75 172 74 148 80 126C85 109 95 95 100 79C103 71 102 54 89'+
-            ' 57M207 57C193 61 200 80 204 89C208 98 213 107 217 117C225 139 226 163 2'+
-            '20 185C215 201 205 216 200 232C197 240 198 257 211 255C220 253 227 240 2'+
-            '32 233C245 216 258 199 271 182C277 173 285 165 284 153C283 145 278 138 2'+
-            '73 132L252 104C242 91 233 78 223 66C219 61 214 55 207 57z"></path>'+
-            '</svg>';
-
-
-        let wrap=document.querySelectorAll('#panel_USL .wrap');
-        let sw0=document.querySelectorAll('#panel_USL .sw0');
-        if(sw0.length==2 && wrap.length==2){
-            if(n==0){
-                wrap[0].style.display='block';
-                sw0[0].textContent='×';
-                wrap[1].style.display='block';
-                sw0[1].textContent='×'; }
-            else if(n==1){
-                wrap[0].style.display='block';
-                sw0[0].innerHTML=wide_SVG;
-                wrap[1].style.display='none'; }
-            else if(n==2){
-                wrap[0].style.display='none';
-                wrap[1].style.display='block';
-                sw0[1].innerHTML=wide_SVG; }}}
-
-
-
-    function select_set(n){
-        if(wrap_select==0){
-            if(n==0){
-                wrap_select=2; }
-            else{
-                wrap_select=1; }}
-        else if(wrap_select==1){
-            wrap_select=0; }
-        else if(wrap_select==2){
-            wrap_select=0; }
-
-        select_view(wrap_select);
-
-        usl_set[0]=wrap_select;
-        let write_json=JSON.stringify(usl_set);
-        localStorage.setItem('USList', write_json); } // ローカルストレージ名
-
-
-
-
     function name_search(){
-        let s_panel=
-            '<div id="search_panel">'+
-            'Script name: <input type="text" class="ns">'+
-            '<style>'+
-            '#search_panel * { font: normal 16px Meiryo; } '+
-            '#search_panel { position: fixed; z-index: 1; top: 5px; left: 198px; '+
-            'padding: 6px 12px; color: #fff; background: #333; } '+
-            '.ns { width: 80px; height: 20px; padding: 2px 6px 0; margin: 0 2px; } '+
-            '.ns:focus-visible { outline: 1px solid #4FC3F7; } '+
-            '</style>'+
-            '</div>';
-
-        if(search==0){
-            search=1;
-            if(!document.querySelector('#search_panel')){
-                document.body.insertAdjacentHTML('beforeend', s_panel); }
-
-            let ns=document.querySelector('.ns');
-            if(ns){
-                ns.focus();
-                ns.oninput=()=>{
-                    search_do(ns); }}
+        let script_name=document.querySelector('.script_name');
+        if(script_name){
+            script_name.focus();
+            script_name.oninput=()=>{
+                search_do(script_name); }
 
             document.addEventListener('keydown', function(event){
                 if(event.keyCode==27){ //「ESC」で検索終了
+                    script_name.value='';
                     end_name_search(); }});
-        }
-        else{
-            end_name_search(); }
+
+        } // if(script_name)
 
 
+        function search_do(script_name){
+            let ask=script_name.value;
 
-        function search_do(ns){
-            let ask=ns.value;
-
-            let list_l0=document.querySelector('.us_list.l0');
-            if(list_l0){
-                search_list(list_l0, ask); }
-
-            let list_l1=document.querySelector('.us_list.l1');
-            if(list_l1){
-                search_list(list_l1, ask); }
-
+            let list=document.querySelector('.us_list');
+            if(list){
+                search_list(list, ask); }
 
             function search_list(list, ask){
                 let items=list.querySelectorAll('li');
@@ -837,30 +357,78 @@ function main(){
         } // search_do()
 
 
-
         function end_name_search(){
-            search=0;
+            let list_li=document.querySelectorAll('.us_list li');
+            for(let k=0; k<list_li.length; k++){
+                list_li[k].style.display=''; }
 
-            let list_l0_li=document.querySelectorAll('.us_list.l0 li');
-            for(let k=0; k<list_l0_li.length; k++){
-                list_l0_li[k].style.display=''; }
-
-            let list_l0=document.querySelector('.us_list.l0');
-            if(list_l0){
-                list_l0.scrollTop=0; }
-
-            let list_l1_li=document.querySelectorAll('.us_list.l1 li');
-            for(let k=0; k<list_l1_li.length; k++){
-                list_l1_li[k].style.display=''; }
-
-            let list_l1=document.querySelector('.us_list.l1');
-            if(list_l1){
-                list_l1.scrollTop=0; }
-
-            if(document.querySelector('#search_panel')){
-                document.querySelector('#search_panel').remove(); }}
+            let list=document.querySelector('.us_list');
+            if(list){
+                list.scrollTop=0; }}
 
     } // name_search()
+
+
+
+
+    function nor_rev(){
+        if(usl_set[3]==0){
+            usl_set[3]=1;
+            sort_reverse(); } // 降順
+        else{
+            usl_set[3]=0;
+            sort_normal(); } // 昇順
+
+        let write_json=JSON.stringify(usl_set);
+        localStorage.setItem('USSearch', write_json); // ローカルストレージ名
+
+
+        function sort_reverse(){
+            if(raw_list.length>1){
+                if(raw_list[0][0]<raw_list[1][0]){
+                    raw_list.reverse();
+                    disp_list(); }}}
+
+
+        function sort_normal(){
+            if(raw_list.length>1){
+                if(raw_list[0][0]>raw_list[1][0]){
+                    raw_list.reverse();
+                    disp_list(); }}}
+
+    } // nor_rev()
+
+
+
+
+    function set_standerd(){
+        let fname=document.querySelector('.file_reader_USS .fname');
+        if(fname){
+            let file_name=fname.textContent;
+            if(file_name.length>0){
+                let header=[];
+                header.push(file_name);
+
+                if(raw_list[0][0]>raw_list[1][0]){
+                    raw_list.reverse(); }
+
+                let write=header.concat(raw_list);
+                let write_json=JSON.stringify(write);
+                localStorage.setItem('USList_data', write_json); }} // アイテム名 🔵 リストデータ保存
+
+    } // set_standerd()
+
+
+
+
+    function set_window(){
+        usl_set[0]=window.outerHeight;
+        usl_set[1]=window.screenX;
+        usl_set[2]=window.screenY;
+        let write_json=JSON.stringify(usl_set);
+        localStorage.setItem('USSearch', write_json); // ローカルストレージ名
+
+    } // set_window()
 
 
 } // main()
