@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        UserScript Search
 // @namespace        http://tampermonkey.net/
-// @version        0.2
+// @version        0.3
 // @description        Tampermonkey の登録スクリプトのリストを表示　ショートカット「F10」
 // @author        Personwritep
 // @match        https://*/*
@@ -94,31 +94,22 @@ function main(){
 
 
     function display(){
+        let help_url='https://ameblo.jp/personwritep/entry-12888631973.html';
 
         let pos_SVG=
-            '<svg viewbox="0 0 512 512" style="height: 18px; vertical-align: -3px;">'+
-            '<path d="M512 256c0 7-3 13-8 18l-80 72C420 350 414 352 408 352c-3 0-7-1-'+
-            '10-2C390 346 384 338 384 328V288h-96v96l40-0c9 0 18 6 22 14s2 19-4 26l-7'+
-            '2 80C269 509 263 512 255 512s-13-3-18-8l-71-80c-6-7-8-17-4-26s12-14 22-1'+
-            '4l39 0V288H128v40c0 9-6 18-14 22C111 351 107 352 104 352c-6 0-12-2-16-6l'+
-            '-80-72C3 269 0 263 0 256s3-13 8-18l80-72C95 160 105 158 114 162C122 166 '+
-            '128 175 128 184V224h95V128l-39-0c-9 0-18-6-22-14S160 95 166 88l71-80c9-1'+
-            '0 27-10 36 0l72 80c6 7 8 17 4 26s-12 14-22 14l-40 0V224H384V184c0-9 6-18'+
-            ' 14-22c9-4 19-2 26 4l80 72C509 243 512 249 512 256z"></path>'+
+            '<svg viewBox="0 0 120 120" style="height: 20px; vertical-align: -4px;">'+
+            '<path style="fill: #009688;" d="M60 5C53 12 45 19 39 27L58 27L58 57'+
+            'L28 57L28 38C20 44 13 52 6 59C12 67 20 75 28 81L28 62L58 62L58 92L39 92C'+
+            '45 100 53 107 60 114C68 108 76 100 82 92L63 92L63 62L93 62L93 81C101 75 '+
+            '108 67 115 60C109 52 101 44 93 38L93 57L63 57L63 27L82 27C76 19 68 11 60'+
+            ' 5z"></path>'+
             '</svg>';
 
         let rev_SVG=
-            '<svg viewBox="0 0 530 530" style="height: 22px; padding-top: 1px;">'+
-            '<path style="fill: #04a0ec;" d="M109 306L46 306C36 306 26 305 20 31'+
-            '5C11 330 31 343 40 352L119 431C126 438 139 457 150 457C161 457 174 438 1'+
-            '81 431L260 352C269 343 289 330 280 315C274 305 264 306 254 306L191 306L1'+
-            '91 153C191 131 196 103 190 82C189 77 185 73 179 71C164 68 147 71 132 71C'+
-            '125 71 118 70 113 75C108 80 109 87 109 94L109 136L109 306M340 231L340 40'+
-            '1L340 443C340 450 339 457 344 462C349 467 356 466 363 466C378 466 395 46'+
-            '9 410 466C416 464 420 460 421 455C427 434 422 406 422 384L422 231L485 23'+
-            '1C495 231 505 232 511 222C519 207 499 194 490 185L411 106C404 99 391 80 '+
-            '381 80C371 80 358 99 351 106L272 185C263 194 243 207 251 222C257 232 267'+
-            ' 231 277 231L340 231z"></path>'+
+            '<svg viewBox="0 0 120 120" style="height: 22px; padding-top: 1px;">'+
+            '<path style="fill: #1976D2;" d="M83 13C74 22 63 31 56 41L77 41L77 1'+
+            '03L90 103L90 41L111 41C104 31 93 20 83 13M30 18L30 81L9 81C16 91 27 100 '+
+            '36 109C46 102 57 91 64 81L43 81L43 18L30 18z"></path>'+
             '</svg>';
 
         let panel=
@@ -135,6 +126,9 @@ function main(){
             '<input class="sw2" type="file">'+
             '<span class="fname"></span>'+
             '<button class="sw3 sw" type="submit">'+ rev_SVG +'</button>'+
+            '<button class="sw7 sw" type="submit">'+
+            '<a href="'+ help_url +'" target="_blank" rel="noopener noreferrer"><b>？</b>'+
+            '</a></button>'+
             '</div>'+
             '<div class="us_list">'+
             '<ul></ul>'+
@@ -161,9 +155,12 @@ function main(){
             '#panel_USS .sw1 { height: 26px; width: 38px; cursor: pointer; } '+
             '#panel_USS .sw2 { display: none; } '+
             '#panel_USS .fname { font: normal 16px/24px Meiryo; margin: 0 12px; height: 21px; } '+
-            '#panel_USS .sw3 { position: absolute; top: 7px; right: 15px; cursor: pointer; } '+
+            '#panel_USS .sw3 { position: absolute; top: 7px; right: 40px; cursor: pointer; } '+
             '#panel_USS .sw4 { margin: 0 15px 0 6px; width: auto; padding: 0 4px; cursor: pointer; } '+
             '#panel_USS .sw5 { margin-left: 6px; cursor: pointer; } '+
+            '#panel_USS .sw7 { position: absolute; top: 10px; right: 8px; color: #999; '+
+            'width: 21px; height: 21px; line-height: 22px; border-radius: 30px; } '+
+            '#panel_USS .sw7 a { text-decoration: none; } '+
 
             '#panel_USS .us_list { width: 480px; height: calc(100vh - 100px); '+
             'overflow-y: scroll; overflow-x: hidden; color: #000; background: #fff; outline: none; } '+
