@@ -47,7 +47,6 @@ function env(){
 
 function main(){
 
-    let data; // バックアップデータの中身
     let raw_list=[]; // リスト表示元の配列
     let usl_set=[]; //「UserScript List」のコントロール
     //  usl_set[0]：windowの高さ
